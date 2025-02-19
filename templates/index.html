@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Learning Suggestion</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chatbot Suggestion</h1>
+        <button onclick="triggerRoute()">Get Suggestions</button>
+        <button onclick="startRecording()">Start Recording</button>
+        <button onclick="stopRecording()">Stop Recording</button>
+        <textarea id="response-text" placeholder="The response will be displayed here..."></textarea>
+    </div>
+
+    <script>
+        // Fungsi untuk men-trigger route '/gen-suggestion'
+        function triggerRoute() {
+            fetch('/gen-suggestion', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response-text').value = data.response;
+            })
+            .catch(error => {
+                document.getElementById('response-text').value = 'Error: ' + error;
+            });
+        }
+
+        // Fungsi untuk men-trigger route '/start-recording'
+        function startRecording() {
+            fetch('/start-recording', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response-text').value = data.message;
+            })
+            .catch(error => {
+                document.getElementById('response-text').value = 'Error: ' + error;
+            });
+        }
+
+        // Fungsi untuk men-trigger route '/stop-recording'
+        function stopRecording() {
+            fetch('/stop-recording', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response-text').value = data.message;
+            })
+            .catch(error => {
+                document.getElementById('response-text').value = 'Error: ' + error;
+            });
+        }
+    </script>
+</body>
+</html>
