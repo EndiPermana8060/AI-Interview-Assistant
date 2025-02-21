@@ -41,6 +41,26 @@ def stop_recording_endpoint():
     else:
         return jsonify({"message": "Tidak ada perekaman yang sedang berjalan"}), 400
 
+
+@app.route('/read-txt', methods=['GET'])
+def read_txt_file():
+    try:
+        # Nama file yang akan dibaca
+        file_path = 'hasil_transkripsi.txt'  # Ganti dengan path file Anda
+
+        # Membaca isi file
+        with open(file_path, 'r') as file:
+            file_content = file.read()
+
+        # Mengembalikan isi file dalam format JSON
+        return jsonify({"content": file_content})
+
+    except FileNotFoundError:
+        return jsonify({"content": "File not found"}), 404
+
+    except Exception as e:
+        return jsonify({"content": f"Error: {str(e)}"}), 500
+    
 @app.route('/gen-suggestion', methods=['POST'])
 def gen_suggestion():
     # Path to the text file
@@ -48,7 +68,6 @@ def gen_suggestion():
     try:
         # Read the file content
         content = utility.read_txt_file(file_path)
-
         # Ensure content is not empty
         if content:
             # Generate suggestions using the bot's generate_suggestion method
