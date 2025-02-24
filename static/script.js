@@ -40,7 +40,99 @@ function stopRecording() {
     });
 }
 
+function clearTranscription() {
+    fetch('/clear-transcription', {
+        method: 'POST',
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('response-text').value = data.message;
+        document.getElementById('file-content-display').value = "";
+    })
+    .catch(error => {
+        document.getElementById('response-text').value = 'Error: ' + error;
+    });
+}
+function downloadTranscription() {
+    fetch('/download-transcription')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Gagal mengunduh file.');
+            }
+            return response.blob(); // Mengambil file sebagai blob
+        })
+        .then(blob => {
+            // Format tanggal: YYYY-MM-DD_HH-MM-SS
+            const now = new Date();
+            const timestamp = now.getFullYear() + '-' +
+                              String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                              String(now.getDate()).padStart(2, '0') + '_' +
+                              String(now.getHours()).padStart(2, '0') + '-' +
+                              String(now.getMinutes()).padStart(2, '0') + '-' +
+                              String(now.getSeconds()).padStart(2, '0');
+
+            // Buat URL blob untuk file
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Hasil_transkripsi_${timestamp}.txt`; // Nama file dengan timestamp
+            document.body.appendChild(a);
+            a.click(); // Klik otomatis untuk mengunduh
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url); // Bersihkan URL blob dari memori
+        })
+        .catch(error => {
+            document.getElementById('response-text').textContent = 'Error: ' + error.message;
+        });
+}
+function downloadValidation() {
+    fetch('/download-validation')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Gagal mengunduh file.');
+            }
+            return response.blob(); // Mengambil file sebagai blob
+        })
+        .then(blob => {
+            // Format tanggal: YYYY-MM-DD_HH-MM-SS
+            const now = new Date();
+            const timestamp = now.getFullYear() + '-' +
+                              String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                              String(now.getDate()).padStart(2, '0') + '_' +
+                              String(now.getHours()).padStart(2, '0') + '-' +
+                              String(now.getMinutes()).padStart(2, '0') + '-' +
+                              String(now.getSeconds()).padStart(2, '0');
+
+            // Buat URL blob untuk file
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Hasil_validasi_${timestamp}.txt`; // Nama file dengan timestamp
+            document.body.appendChild(a);
+            a.click(); // Klik otomatis untuk mengunduh
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url); // Bersihkan URL blob dari memori
+        })
+        .catch(error => {
+            document.getElementById('response-text').textContent = 'Error: ' + error.message;
+        });
+}
+
+
 // Fungsi untuk membaca konten file txt setiap beberapa detik
+function getValidation() {
+    fetch('/get-validation',{
+        method: 'POST'
+    })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('response-text').value = data.content;
+        })
+        .catch(error => {
+            document.getElementById('response-text').value = 'Error: ' + error;
+        });
+}
+
 function fetchFileContent() {
     fetch('/read-txt')
         .then(response => response.json())
@@ -52,5 +144,10 @@ function fetchFileContent() {
         });
 }
 
-// Refresh isi file txt setiap 5 detik
-setInterval(fetchFileContent, 5000);
+// Panggil pertama kali dengan delay 1 detik
+setTimeout(() => {
+    fetchFileContent();
+
+    // Setelah eksekusi pertama, jalankan setInterval tiap 20 detik
+    setInterval(fetchFileContent, 20000);
+}, 1000);
