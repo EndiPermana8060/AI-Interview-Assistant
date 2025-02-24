@@ -8,6 +8,16 @@
 </head>
 <body>
     <div class="layout-container">
+        <div class="action-button">
+            <div class="Transcription-button">
+                <button onclick="downloadTranscription()">Download Transcription Results</button>
+                <button onclick="clearTranscription()">Clear Transcription Results</button>
+            </div>
+            <div class="validation-button">
+                <button onclick="getValidation()">Get Validation Results</button>
+                <button onclick="downloadValidation()">Download Validation Results</button>
+            </div>
+        </div>
         <!-- Text area to display file content -->
         <div class="textarea-container">
             <textarea id="file-content-display" placeholder="File content will be displayed here..."></textarea>

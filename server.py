@@ -1,11 +1,9 @@
 from flask import Flask, render_template, jsonify
-import os
 from utils import Utils
 from chatbot import ChatBot
-from groq import Groq
-import pyaudio
-import wave
-import time
+from datetime import datetime
+from flask import send_file
+import os
 
 app = Flask(__name__)
 
@@ -78,6 +76,86 @@ def gen_suggestion():
     except Exception as e:
         return f"An error occurred: {e}", 500
 
+@app.route('/clear-transcription', methods=['POST'])
+def clear_transcription():
+    # Path ke file hasil transkripsi
+    file_path = "hasil_transkripsi.txt"
+
+    try:
+        # Panggil fungsi untuk membersihkan transkripsi
+        success = utility.bersihkan_transkripsi(file_path)
+
+        if success:
+            return jsonify({"message": "Hasil transkripsi sudah dibersihkan."}), 200
+        else:
+            return jsonify({"message": "Gagal membersihkan hasil transkripsi."}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/download-transcription', methods=['GET'])
+def download_transcription():
+    # Path ke file hasil transkripsi
+    file_path = "hasil_transkripsi.txt"
+
+    try:
+        # Generate nama file baru berdasarkan tanggal saat ini
+        tanggal_sekarang = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        nama_file_baru = f"hasil_transkripsi_{tanggal_sekarang}.txt"
+
+        # Kirim file ke user untuk diunduh
+        return send_file(file_path, as_attachment=True, download_name=nama_file_baru, mimetype="text/plain")
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/get-validation', methods=['POST'])
+def get_validation():
+    file_path = "hasil_transkripsi.txt"
+
+    # Pastikan file input ada
+    if not os.path.exists(file_path):
+        return jsonify({"error": "File hasil transkripsi tidak ditemukan."}), 404
+
+    try:
+        # Membaca isi file hasil transkripsi
+        with open(file_path, "r", encoding="utf-8") as input_file:
+            input_text = input_file.read()
+
+        # Generate validation text menggunakan fungsi bot
+        validation_text = bot.generate_validation(input_text)
+
+        # Simpan hasil validasi ke file baru
+        output_filename = "validation_output.txt"
+        output_filepath = os.path.join(os.path.dirname(file_path), output_filename)
+
+        with open(output_filepath, "w", encoding="utf-8") as output_file:
+            output_file.write(validation_text)
+
+        # Membaca ulang file hasil validasi untuk dikirim ke frontend
+        with open(output_filepath, "r", encoding="utf-8") as file:
+            content = file.read()
+
+        return jsonify({"content": content}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Terjadi kesalahan: {str(e)}"}), 500
+
+
+@app.route('/download-validation', methods=['GET'])
+def download_validation():
+    # Path ke file hasil transkripsi
+    file_path = "validation_output.txt"
+
+    try:
+        # Generate nama file baru berdasarkan tanggal saat ini
+        tanggal_sekarang = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        nama_file_baru = f"hasil_validasi_{tanggal_sekarang}.txt"
+
+        # Kirim file ke user untuk diunduh
+        return send_file(file_path, as_attachment=True, download_name=nama_file_baru, mimetype="text/plain")
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

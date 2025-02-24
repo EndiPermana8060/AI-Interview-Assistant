@@ -5,6 +5,8 @@ import os
 from groq import Groq
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
+import threading
+
 
 load_dotenv()
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
@@ -46,6 +48,16 @@ class Utils:
                 print(f"Hasil transkripsi disimpan ke {nama_file}")
         except Exception as e:
             print(f"Terjadi kesalahan saat menyimpan hasil transkripsi: {e}")
+
+    def bersihkan_transkripsi(self, nama_file="hasil_transkripsi.txt"):
+        try:
+            with open(nama_file, "w", encoding="utf-8") as file:  # "w" untuk mengosongkan file
+                pass  # Tidak perlu menulis string kosong
+            print(f"Hasil transkripsi dibersihkan.")
+            return True  # Menandakan berhasil
+        except Exception as e:
+            print(f"Terjadi kesalahan saat membersihkan hasil transkripsi: {e}")
+            return False  # Menandakan gagal
 
     # Fungsi untuk melakukan transkripsi secara asynchronous
     def transkripsi_audio(self, output_filename):
@@ -107,15 +119,23 @@ class Utils:
         except KeyboardInterrupt:
             print("Perekaman dihentikan.")
 
+    def _stop(self):
+            global stream, p
+            if stream:
+                stream.stop_stream()
+                stream.close()
+                stream = None
+            if p:
+                p.terminate()
+                p = None
+            print("Perekaman selesai.")
+
     def stop_recording(self):
         global stream, p, recording
         print("Menghentikan perekaman...")
-        recording = False
+        recording = False  # Set flag untuk menghentikan loop di thread utama
+        # Jalankan dalam thread baru agar Flask tidak terhenti
+        threading.Thread(target=self._stop, daemon=True).start()
 
-        if stream:
-            stream.stop_stream()
-            stream.close()
-        if p:
-            p.terminate()
-
-        print("Perekaman selesai.")
+    
+    
