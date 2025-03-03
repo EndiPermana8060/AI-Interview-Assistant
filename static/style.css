@@ -60,7 +60,7 @@ h1 {
 }
 
 button {
-    background-color: #007bff;
+    background-color: #0ba21d;
     color: white;
     padding: 10px 10px;
     border: none;
@@ -72,9 +72,17 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #086111;
 }
 
 .Transcription-button {
     margin-bottom: 30px;
+}
+
+.preindex-button {
+    margin-top: 350px;
+}
+
+.decision-button {
+    margin-top: 50px;
 }

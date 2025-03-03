@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Machine Learning Suggestion</title>
+    <title>AI Interview Assistant</title>
     <link rel="stylesheet" href={{ url_for('static', filename='style.css') }}>
 </head>
 <body>
@@ -17,6 +17,12 @@
                 <button onclick="getValidation()">Get Validation Results</button>
                 <button onclick="downloadValidation()">Download Validation Results</button>
             </div>
+            <div class="decision-button">
+                <button onclick="genDecision()">Generate Decision</button>
+            </div>
+            <div class="preindex-button">
+                <button onclick="window.location.href='/'">Back</button>
+            </div>
         </div>
         <!-- Text area to display file content -->
         <div class="textarea-container">
@@ -25,7 +31,7 @@
 
         <!-- Main card with buttons and response area -->
         <div class="container">
-            <h1>Bot Question Suggestion</h1>
+            <h1>AI Interview Assistant</h1>
             <button onclick="startRecording()">Start Recording</button>
             <button onclick="stopRecording()">Stop Recording</button>
             <button onclick="triggerRoute()">Get Suggestions</button>
