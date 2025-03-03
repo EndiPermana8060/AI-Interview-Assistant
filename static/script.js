@@ -40,6 +40,7 @@ function stopRecording() {
     });
 }
 
+
 function clearTranscription() {
     fetch('/clear-transcription', {
         method: 'POST',
@@ -132,6 +133,36 @@ function getValidation() {
             document.getElementById('response-text').value = 'Error: ' + error;
         });
 }
+
+function genDecision() {
+    fetch('/get-decision', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())  // Parse response ke JSON
+    .then(data => {
+        if (data.response) {
+            let kecocokan = data.response.kecocokan;
+            let kategori = data.response.kategori;
+            let penjelasan = data.response.penjelasan; // Ambil penjelasan
+
+            // Format tampilan agar lebih jelas
+            document.getElementById('response-text').value = 
+                `🔹 Kecocokan dengan JobDesc: ${kecocokan}\n` +
+                `🔹 Kategori: ${kategori}\n\n` +
+                `📌 Penjelasan:\n${penjelasan}`;
+        } else {
+            document.getElementById('response-text').value = "⚠️ Error: Response tidak ditemukan.";
+        }
+    })
+    .catch(error => {
+        document.getElementById('response-text').value = '⚠️ Error: ' + error;
+    });
+}
+
+
 
 function fetchFileContent() {
     fetch('/read-txt')

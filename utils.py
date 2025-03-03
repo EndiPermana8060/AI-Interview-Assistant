@@ -67,6 +67,7 @@ class Utils:
                     file=(output_filename, file.read()),
                     model="whisper-large-v3",
                     response_format="verbose_json",
+                    language='id'
                 )
 
                 if hasattr(transcription, 'text'):

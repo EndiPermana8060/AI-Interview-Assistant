@@ -1,11 +1,14 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request, session
 from utils import Utils
 from chatbot import ChatBot
 from datetime import datetime
 from flask import send_file
 import os
+import secrets
 
 app = Flask(__name__)
+app.secret_key = secrets.token_hex(32)  # Diperlukan untuk sessio
+print(app.secret_key)
 
 utility = Utils()
 bot = ChatBot()
@@ -13,7 +16,30 @@ bot = ChatBot()
 recording_started = False
 
 @app.route('/')
+def preindex():
+    app.secret_key = secrets.token_hex(32)  # Reset setiap akses /preindex
+    print(app.secret_key)
+    session.clear()
+    return render_template('preindex.html')
+
+@app.route('/index', methods=['GET', 'POST'])
 def index():
+    if request.method == 'POST':
+        data = request.get_json()
+        input1 = data.get("input1", "")
+        session['GRIT'] = input1
+        input2 = data.get("input2", "")
+        session['JOBDESC'] = input2
+        input3 = data.get("input3", "")
+        session['JOBSPEC'] = input3
+
+        return jsonify({
+            "message": "Data berhasil diterima",
+            "input1": input1,
+            "input2": input2,
+            "input3": input3
+        })
+    
     return render_template('index.html')
 
 @app.route('/start-recording', methods=['POST'])
@@ -59,17 +85,19 @@ def read_txt_file():
     except Exception as e:
         return jsonify({"content": f"Error: {str(e)}"}), 500
     
-@app.route('/gen-suggestion', methods=['POST'])
+@app.route('/gen-suggestion', methods=['GET', 'POST'])
 def gen_suggestion():
     # Path to the text file
     file_path = "hasil_transkripsi.txt"  # Ensure correct path format
+    GRIT = session.get('GRIT')
+    print(GRIT)
     try:
         # Read the file content
         content = utility.read_txt_file(file_path)
         # Ensure content is not empty
         if content:
             # Generate suggestions using the bot's generate_suggestion method
-            response = bot.generate_suggestion(content)
+            response = bot.generate_suggestion(content, GRIT)
             return jsonify({'response': response}), 200
         else:
             return "Failed to read file or file is empty.", 400
@@ -140,6 +168,36 @@ def get_validation():
     except Exception as e:
         return jsonify({"error": f"Terjadi kesalahan: {str(e)}"}), 500
 
+@app.route('/get-decision', methods=['POST'])
+def get_decision():
+    file_path = "hasil_transkripsi.txt"  # Pastikan path benar
+    JOBDESC = session.get('JOBDESC', '')  # Default ke string kosong jika None
+    JOBSPEC = session.get('JOBSPEC', '')
+
+    try:
+        print("JOBDESC:", JOBDESC)  # Debug
+        print("JOBSPEC:", JOBSPEC)
+
+        # Cek apakah file ada
+        if not os.path.exists(file_path):
+            return jsonify({'error': 'File transkripsi tidak ditemukan.'}), 400
+
+        # Read the file content
+        content = utility.read_txt_file(file_path).strip()
+
+        # Validasi sebelum diproses
+        if not content:
+            return jsonify({'error': 'File transkripsi kosong.'}), 400
+        if not JOBDESC.strip() or not JOBSPEC.strip():
+            return jsonify({'error': 'JOBDESC atau JOBSPEC belum diatur dalam session.'}), 400
+
+        # Generate similarity
+        response = bot.cosine_similarity(content, JOBDESC, JOBSPEC)
+        return jsonify({'response': response}), 200
+
+    except Exception as e:
+        print("Error terjadi:", e)  # Debugging
+        return jsonify({'error': f"An error occurred: {str(e)}"}), 500
 
 @app.route('/download-validation', methods=['GET'])
 def download_validation():
