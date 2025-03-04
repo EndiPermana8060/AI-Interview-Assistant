@@ -1,0 +1,32 @@
+
+        📌 Summary:
+        Berikut adalah ringkasan dari teks percakapan wawancara yang tidak terstruktur:
+
+Wawancara ini dilakukan antara beberapa orang, termasuk Pak Aji, Pak Arli, dan Vio (calon magang). Mereka membahas tentang latar belakang Vio, pengalaman kerja, dan proyek yang pernah dilakukan. Vio menjelaskan tentang pengalaman kerja di bidang data sains dan machine learning, serta proyek yang pernah dilakukan, seperti employee promotion prediction dan car price prediction.
+
+Pak Aji dan Pak Arli juga bertanya tentang detail proyek tersebut, seperti parameter yang digunakan, metode yang dipilih, dan hasil akurasi. Vio menjelaskan bahwa proyek employee promotion prediction menggunakan logistic regression, sedangkan proyek car price prediction menggunakan XGBoost.
+
+Selain itu, mereka juga membahas tentang kemungkinan Vio bergabung dengan tim mereka sebagai magang dan bagaimana sistem kerja di perusahaan tersebut. Pak Aji menjelaskan bahwa Vio akan bekerja sama dengan tim AI untuk mengeksekusi proyek-proyek AI yang diberikan oleh CI coach atau atasan.
+
+Wawancara ini berakhir dengan Pak Aji dan Pak Arli mengucapkan terima kasih kepada Vio dan berjanji akan menghubungi kembali untuk memberitahu hasil wawancara.
+
+        📌 Validasi:
+        Setelah menganalisis teks percakapan, saya dapat menyimpulkan bahwa percakapan tersebut adalah wawancara kerja untuk posisi internship di sebuah perusahaan. Berikut beberapa poin yang dapat saya simpulkan:
+
+1. Percakapan dimulai dengan perkenalan dan penjelasan tentang posisi internship yang ditawarkan.
+2. Vio, calon intern, memperkenalkan diri dan menjelaskan pengalaman serta kemampuan yang relevan dengan posisi tersebut.
+3. Vio menjelaskan tentang proyek yang pernah dia kerjakan, termasuk proyek "Employee Promotion Prediction" dan "Car Price Prediction".
+4. Vio menjelaskan bahwa dia menggunakan logistic regression untuk proyek "Employee Promotion Prediction" dan XGBoost untuk proyek "Car Price Prediction".
+5. Percakapan kemudian berlanjut ke topik sistem dan proses kerja di perusahaan, termasuk bagaimana proyek AI dikerjakan dan bagaimana Vio dapat berkontribusi pada proyek tersebut.
+
+Dalam hal validitas informasi, saya tidak menemukan kesalahan yang signifikan dalam percakapan. Namun, ada beberapa poin yang perlu diperjelas atau ditambahkan:
+
+* Vio menyebutkan bahwa dia menggunakan logistic regression untuk proyek "Employee Promotion Prediction" dengan akurasi 88%. Namun, tidak disebutkan apa yang dimaksud dengan "akurasi" dalam konteks ini.
+* Vio juga menyebutkan bahwa dia menggunakan XGBoost untuk proyek "Car Price Prediction", tetapi tidak disebutkan apa yang dimaksud dengan "XGBoost" dalam konteks ini.
+* Percakapan tentang sistem dan proses kerja di perusahaan cukup umum dan tidak memberikan informasi yang spesifik tentang bagaimana Vio dapat berkontribusi pada proyek AI.
+
+Dalam keseluruhan, percakapan tampaknya berjalan lancar dan tidak ada kesalahan yang signifikan. Namun, ada beberapa poin yang perlu diperjelas atau ditambahkan untuk memberikan informasi yang lebih lengkap dan akurat.
+
+        🔹 Kecocokan dengan JobDesc dan JobSpec: 52.27%
+        🔹 Kategori: Bucket List 📌
+        

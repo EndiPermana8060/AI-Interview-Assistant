@@ -1,7 +1,14 @@
 // Fungsi untuk men-trigger route '/gen-suggestion'
 function triggerRoute() {
+    // Ambil status checkbox (true jika dicentang, false jika tidak)
+    let useGrit = document.getElementById('useGrit').checked;
+
     fetch('/gen-suggestion', {
         method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ useGrit: useGrit }) // Kirim status checkbox ke backend
     })
     .then(response => response.json())
     .then(data => {
@@ -86,8 +93,8 @@ function downloadTranscription() {
             document.getElementById('response-text').textContent = 'Error: ' + error.message;
         });
 }
-function downloadValidation() {
-    fetch('/download-validation')
+function downloadDecision() {
+    fetch('/download-decision')
         .then(response => {
             if (!response.ok) {
                 throw new Error('Gagal mengunduh file.');
@@ -108,7 +115,7 @@ function downloadValidation() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `Hasil_validasi_${timestamp}.txt`; // Nama file dengan timestamp
+            a.download = `Decision_${timestamp}.txt`; // Nama file dengan timestamp
             document.body.appendChild(a);
             a.click(); // Klik otomatis untuk mengunduh
             document.body.removeChild(a);
@@ -116,21 +123,6 @@ function downloadValidation() {
         })
         .catch(error => {
             document.getElementById('response-text').textContent = 'Error: ' + error.message;
-        });
-}
-
-
-// Fungsi untuk membaca konten file txt setiap beberapa detik
-function getValidation() {
-    fetch('/get-validation',{
-        method: 'POST'
-    })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('response-text').value = data.content;
-        })
-        .catch(error => {
-            document.getElementById('response-text').value = 'Error: ' + error;
         });
 }
 
@@ -147,12 +139,13 @@ function genDecision() {
             let kecocokan = data.response.kecocokan;
             let kategori = data.response.kategori;
             let penjelasan = data.response.penjelasan; // Ambil penjelasan
-
+            let validasi = data.response.validasi;
             // Format tampilan agar lebih jelas
             document.getElementById('response-text').value = 
-                `🔹 Kecocokan dengan JobDesc: ${kecocokan}\n` +
-                `🔹 Kategori: ${kategori}\n\n` +
-                `📌 Penjelasan:\n${penjelasan}`;
+                `📌 Summary:\n${penjelasan}\n\n` +
+                `📌 Validasi:\n${validasi}\n\n` +
+                `🔹 Kecocokan dengan JobDesc dan JobSpec: ${kecocokan}\n` +
+                `🔹 Kategori: ${kategori}\n\n`;
         } else {
             document.getElementById('response-text').value = "⚠️ Error: Response tidak ditemukan.";
         }

@@ -4,40 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Interview Assistant</title>
-    <link rel="stylesheet" href={{ url_for('static', filename='style.css') }}>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="layout-container">
-        <div class="action-button">
-            <div class="Transcription-button">
-                <button onclick="downloadTranscription()">Download Transcription Results</button>
-                <button onclick="clearTranscription()">Clear Transcription Results</button>
+        <div class="sidebar glassmorphism">
+            <h2>Actions</h2>
+            <div class="action-button">
+                <button onclick="downloadTranscription()">📥 Download Transcription</button>
+                <button onclick="clearTranscription()">🗑 Clear Transcription</button>
+                <button onclick="genDecision()">🔍 Generate Decision</button>
+                <button onclick="downloadDecision()">📄 Download Decision</button>
+                <button onclick="window.location.href='/'">⬅ Back</button>
             </div>
-            <div class="validation-button">
-                <button onclick="getValidation()">Get Validation Results</button>
-                <button onclick="downloadValidation()">Download Validation Results</button>
-            </div>
-            <div class="decision-button">
-                <button onclick="genDecision()">Generate Decision</button>
-            </div>
-            <div class="preindex-button">
-                <button onclick="window.location.href='/'">Back</button>
-            </div>
-        </div>
-        <!-- Text area to display file content -->
-        <div class="textarea-container">
-            <textarea id="file-content-display" placeholder="File content will be displayed here..."></textarea>
         </div>
 
-        <!-- Main card with buttons and response area -->
-        <div class="container">
-            <h1>AI Interview Assistant</h1>
-            <button onclick="startRecording()">Start Recording</button>
-            <button onclick="stopRecording()">Stop Recording</button>
-            <button onclick="triggerRoute()">Get Suggestions</button>
-            <textarea id="response-text" placeholder="The response will be displayed here..."></textarea>
+        <div class="main-content glassmorphism">
+            <h1>🎤 AI Interview Assistant</h1>
+
+            <div class="textarea-container">
+                <textarea id="file-content-display" placeholder="📜 File content will appear here..."></textarea>
+            </div>
+
+            <div class="controls">
+                <button onclick="startRecording()">🎙 Start Recording</button>
+                <button onclick="stopRecording()">⏹ Stop Recording</button>
+                <button onclick="triggerRoute()">✨ Get Suggestions</button>
+                <label>
+                    <input type="checkbox" id="useGrit"> Gunakan GRIT
+                </label>
+            </div>
+
+            <div class="response-container">
+                <textarea id="response-text" placeholder="💬 The response will be displayed here..."></textarea>
+            </div>
         </div>
     </div>
-    <script src="static\script.js"></script>
+    <script src="static/script.js"></script>
 </body>
 </html>
