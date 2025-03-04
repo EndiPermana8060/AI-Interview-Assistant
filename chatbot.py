@@ -11,7 +11,7 @@ class ChatBot:
         # Initialize the ChatGroq model using the provided API key and a specific model.
         
         self.llm = ChatGroq(groq_api_key=GROQ_API_KEY, model_name="llama-3.3-70b-versatile")
-        self.default_suggestion_system_prompt = "You are a useful assistant that accepts text input in Indonesian and is designed to support the interviewer. Based on the conversation text provided, create up to 5 in-depth follow-up questions using Indonesian. These questions will help the interviewer explore the candidate's experience, problem-solving abilities, or other relevant areas in more depth. Make sure the 2 final questions are questions that are relevant to the topic of conversation and the 3 questions at the beginning to assess how persistent the candidate is based on their answers in the interview based on the following GRIT:"
+        self.default_suggestion_system_prompt = "You are a helpful assistant that receives text input in Indonesian and designed to support interviewers. Given the conversation text provided, generate up to 5 insightful follow-up questions using indonesian language. These questions should help the interviewer explore the candidate's experience, problem-solving abilities, or other relevant areas more deeply. Ensure the questions are relevant, concise, and written in Indonesian to suit the context."
         
         # Define the prompt template for generating formatted-text.
         self.gen_format_template = ChatPromptTemplate.from_messages(
@@ -23,6 +23,18 @@ class ChatBot:
                 (
                     "human",
                     "Input:\n{text}\nPlease convert this text into a structured question-and-answer format. Ensure that each relevant dialogue is paired into a clear Q&A format."
+                )
+            ]
+        )
+        self.gen_summary_template = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "You are an assistant who is an expert in summarizing interview texts in Indonesian. Given the results of an unstructured interview transcription, your task is to create a summary that is clear, concise, and retains key information."
+                ),
+                (
+                    "human",
+                    "Input:\n{text}\nPlease make a summary regarding the text which contains unstructured interview conversations from the text."
                 )
             ]
         )
@@ -44,13 +56,11 @@ class ChatBot:
         # Create a suggestion generation chain by combining the template and the model.
         self.generate_format_chain = self.gen_format_template | self.llm
         self.generate_validation_chain = self.gen_validation_template | self.llm
+        self.generate_summary_chain = self.gen_summary_template | self.llm
 
-    def generate_suggestion(self, text, additional_prompt=""):
-        # Gabungkan prompt default dengan tambahan user
-        full_system_prompt = self.default_suggestion_system_prompt + " " + additional_prompt + "and the response must be neatly formatted with new lines and so on."
-
-        # Membuat prompt template secara dinamis
-        gen_suggestion_template = ChatPromptTemplate.from_messages(
+    def generate_suggestion_without_grit(self, text):
+        full_system_prompt = self.default_suggestion_system_prompt
+        gen_suggestion_without_grit_template = ChatPromptTemplate.from_messages(
             [
                 ("system", full_system_prompt),  # System message yang sudah diperbarui
                 ("human", f"Input:\n{text}\nnPlease analyze this conversation and generate follow-up questions based on the interview flow.")
@@ -58,10 +68,29 @@ class ChatBot:
         )
 
         # Buat chain dengan template dinamis
-        generate_suggestion_chain = gen_suggestion_template | self.llm
+        generate_suggestion_without_grit_chain = gen_suggestion_without_grit_template | self.llm
         
         # Invoke chain
-        response = generate_suggestion_chain.invoke({'text': text}).content
+        response = generate_suggestion_without_grit_chain.invoke({'text': text}).content
+        return response
+
+    def generate_suggestion_with_grit(self, text, additional_prompt=""):
+        # Gabungkan prompt default dengan tambahan user
+        full_system_prompt = self.default_suggestion_system_prompt + "Make sure the questions at the beginning to assess how persistent the candidate is based on their answers in the interview based on the following GRIT: " + additional_prompt + "and the response must be neatly formatted with new lines and so on."
+
+        # Membuat prompt template secara dinamis
+        gen_suggestion_with_grit_template = ChatPromptTemplate.from_messages(
+            [
+                ("system", full_system_prompt),  # System message yang sudah diperbarui
+                ("human", f"Input:\n{text}\nnPlease analyze this conversation and generate follow-up questions based on the interview flow.")
+            ]
+        )
+
+        # Buat chain dengan template dinamis
+        generate_suggestion_with_grit_chain = gen_suggestion_with_grit_template | self.llm
+        
+        # Invoke chain
+        response = generate_suggestion_with_grit_chain.invoke({'text': text}).content
         return response
     
     def generate_format(self, text):
@@ -74,6 +103,11 @@ class ChatBot:
         response = self.generate_validation_chain.invoke({'text':text}).content
         return response
     
+    def generate_summary(self, text):
+        # Invoke the suggestion generation chain with the provided text and return the response.
+        response = self.generate_summary_chain.invoke({'text':text}).content
+        return response
+    
     def determine_category(self, score):
         if score >= 70:
             return "Considered ✅"
@@ -82,53 +116,35 @@ class ChatBot:
         else:
             return "Disconsidered ❌"
 
-    def generate_summary(self, similarity_percentage):
-        """Membuat penjelasan dinamis berdasarkan nilai cosine similarity."""
-        explanation = f"Teks transkripsi memiliki kemiripan {similarity_percentage}% dengan JobDesc dan JobSpec.\n"
-
-        # Penjelasan lebih spesifik berdasarkan tingkat kecocokan
-        if similarity_percentage >= 90:
-            explanation += "Teks ini sangat mirip dengan deskripsi pekerjaan, dengan banyak kata kunci dan frasa yang cocok. Kandidat hampir pasti memiliki pengalaman yang sangat relevan."
-        elif similarity_percentage >= 80:
-            explanation += "Ada banyak kesamaan dalam kata kunci dan konteks pekerjaan. Kandidat kemungkinan memiliki pengalaman yang cocok dengan deskripsi pekerjaan."
-        elif similarity_percentage >= 70:
-            explanation += "Beberapa bagian teks mencerminkan pekerjaan yang dicari, tetapi ada sedikit perbedaan dalam keterampilan atau tanggung jawab utama."
-        elif similarity_percentage >= 60:
-            explanation += "Ada beberapa kemiripan dalam konsep utama, tetapi beberapa bagian penting mungkin tidak sepenuhnya cocok."
-        elif similarity_percentage >= 50:
-            explanation += "Beberapa kata kunci serupa ditemukan, tetapi konteksnya masih cukup berbeda."
-        else:
-            explanation += "Transkripsi ini memiliki banyak perbedaan dengan job description, sehingga kemungkinan besar tidak sesuai dengan posisi yang dicari."
-
-        return explanation
     
     def cosine_similarity(self, transkripsi, jobdesc, jobspec):
-        model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-
+        model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
+        # Generate penjelasan yang lebih dinamis
+        summary = self.generate_summary(transkripsi)
         # Konversi ke vektor
-        emb1 = model.encode(transkripsi, convert_to_tensor=True)
+        emb1 = model.encode(summary, convert_to_tensor=True)
         emb2 = model.encode(jobdesc, convert_to_tensor=True)
         emb3 = model.encode(jobspec, convert_to_tensor=True)
 
         # Hitung cosine similarity antar pasangan
         similarity_1_2 = util.pytorch_cos_sim(emb1, emb2).item()  # transkripsi vs jobdesc
+        print(similarity_1_2)
         similarity_1_3 = util.pytorch_cos_sim(emb1, emb3).item()  # transkripsi vs jobspec
-        similarity_2_3 = util.pytorch_cos_sim(emb2, emb3).item()  # jobdesc vs jobspec
+        print(similarity_1_3)
 
         # Hitung rata-rata similarity
-        avg_similarity = (similarity_1_2 + similarity_1_3 + similarity_2_3) / 3
+        avg_similarity = (similarity_1_2 + similarity_1_3) / 2
         similarity_percentage = round(avg_similarity * 100, 2)
 
         # Tentukan kategori berdasarkan similarity
         kategori = self.determine_category(similarity_percentage)
 
-        # Generate penjelasan yang lebih dinamis
-        summary = self.generate_summary(similarity_percentage)
-
+        validation = self.generate_validation(transkripsi)
         return {
             "kecocokan": f"{similarity_percentage}%",
             "kategori": kategori,
-            "penjelasan": summary
+            "penjelasan": summary,
+            "validasi": validation
         }
 
 

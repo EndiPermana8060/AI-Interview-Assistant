@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, session
+from flask import Flask, render_template, jsonify, request, session, json
 from utils import Utils
 from chatbot import ChatBot
 from datetime import datetime
@@ -87,22 +87,29 @@ def read_txt_file():
     
 @app.route('/gen-suggestion', methods=['GET', 'POST'])
 def gen_suggestion():
-    # Path to the text file
-    file_path = "hasil_transkripsi.txt"  # Ensure correct path format
-    GRIT = session.get('GRIT')
-    print(GRIT)
+    data = request.json
+    file_path = "hasil_transkripsi.txt"  # Pastikan path ini benar
+    use_grit = data.get("useGrit", False)  # Ambil status checkbox
+
     try:
-        # Read the file content
+        # Baca isi file
         content = utility.read_txt_file(file_path)
-        # Ensure content is not empty
-        if content:
-            # Generate suggestions using the bot's generate_suggestion method
-            response = bot.generate_suggestion(content, GRIT)
-            return jsonify({'response': response}), 200
+        if not content:
+            return jsonify({"error": "Failed to read file or file is empty."}), 400
+
+        # Jika checkbox dicentang (use_grit == True)
+        if use_grit:
+            GRIT = session.get('GRIT')
+            print(GRIT)
+            response = bot.generate_suggestion_with_grit(content, GRIT)
         else:
-            return "Failed to read file or file is empty.", 400
+            response = bot.generate_suggestion_without_grit(content)
+
+        return jsonify({'response': response}), 200
+
     except Exception as e:
-        return f"An error occurred: {e}", 500
+        return jsonify({"error": f"An error occurred: {e}"}), 500
+
 
 @app.route('/clear-transcription', methods=['POST'])
 def clear_transcription():
@@ -136,37 +143,6 @@ def download_transcription():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('/get-validation', methods=['POST'])
-def get_validation():
-    file_path = "hasil_transkripsi.txt"
-
-    # Pastikan file input ada
-    if not os.path.exists(file_path):
-        return jsonify({"error": "File hasil transkripsi tidak ditemukan."}), 404
-
-    try:
-        # Membaca isi file hasil transkripsi
-        with open(file_path, "r", encoding="utf-8") as input_file:
-            input_text = input_file.read()
-
-        # Generate validation text menggunakan fungsi bot
-        validation_text = bot.generate_validation(input_text)
-
-        # Simpan hasil validasi ke file baru
-        output_filename = "validation_output.txt"
-        output_filepath = os.path.join(os.path.dirname(file_path), output_filename)
-
-        with open(output_filepath, "w", encoding="utf-8") as output_file:
-            output_file.write(validation_text)
-
-        # Membaca ulang file hasil validasi untuk dikirim ke frontend
-        with open(output_filepath, "r", encoding="utf-8") as file:
-            content = file.read()
-
-        return jsonify({"content": content}), 200
-
-    except Exception as e:
-        return jsonify({"error": f"Terjadi kesalahan: {str(e)}"}), 500
 
 @app.route('/get-decision', methods=['POST'])
 def get_decision():
@@ -193,21 +169,39 @@ def get_decision():
 
         # Generate similarity
         response = bot.cosine_similarity(content, JOBDESC, JOBSPEC)
+        # Format hasil response sesuai kebutuhan
+        formatted_text = f"""
+        📌 Summary:
+        {response["penjelasan"]}
+
+        📌 Validasi:
+        {response["validasi"]}
+
+        🔹 Kecocokan dengan JobDesc dan JobSpec: {response["kecocokan"]}
+        🔹 Kategori: {response["kategori"]}
+        """
+
+        # Simpan ke file .txt
+        output_filename = "Decision.txt"
+        output_filepath = os.path.join(os.path.dirname(file_path), output_filename)
+
+        with open(output_filepath, "w", encoding="utf-8") as output_file:
+            output_file.write(formatted_text)
         return jsonify({'response': response}), 200
 
     except Exception as e:
         print("Error terjadi:", e)  # Debugging
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
 
-@app.route('/download-validation', methods=['GET'])
-def download_validation():
+@app.route('/download-decision', methods=['GET'])
+def download_decision():
     # Path ke file hasil transkripsi
-    file_path = "validation_output.txt"
+    file_path = "decision.txt"
 
     try:
         # Generate nama file baru berdasarkan tanggal saat ini
         tanggal_sekarang = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        nama_file_baru = f"hasil_validasi_{tanggal_sekarang}.txt"
+        nama_file_baru = f"Decision_{tanggal_sekarang}.txt"
 
         # Kirim file ke user untuk diunduh
         return send_file(file_path, as_attachment=True, download_name=nama_file_baru, mimetype="text/plain")
