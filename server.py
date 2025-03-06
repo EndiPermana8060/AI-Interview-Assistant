@@ -1,10 +1,11 @@
 from flask import Flask, render_template, jsonify, request, session, json
 from utils import Utils
-from chatbot import ChatBot
+from chatbot import ChatBot, FaissVectorDB
 from datetime import datetime
 from flask import send_file
 import os
 import secrets
+import numpy as np
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)  # Diperlukan untuk sessio
@@ -12,6 +13,7 @@ print(app.secret_key)
 
 utility = Utils()
 bot = ChatBot()
+faiss_db = FaissVectorDB()
 # Variable kontrol untuk status perekaman
 recording_started = False
 
@@ -32,7 +34,8 @@ def index():
         session['JOBDESC'] = input2
         input3 = data.get("input3", "")
         session['JOBSPEC'] = input3
-
+        # Tambahkan ke FAISS
+        faiss_db.add_text(session['JOBDESC'], session['JOBSPEC'])
         return jsonify({
             "message": "Data berhasil diterima",
             "input1": input1,
@@ -100,7 +103,11 @@ def gen_suggestion():
         # Jika checkbox dicentang (use_grit == True)
         if use_grit:
             GRIT = session.get('GRIT')
-            print(GRIT)
+
+            # Pastikan GRIT ada sebelum digunakan
+            if not GRIT:
+                return jsonify({"error": "GRIT data is missing from the session."}), 400
+
             response = bot.generate_suggestion_with_grit(content, GRIT)
         else:
             response = bot.generate_suggestion_without_grit(content)
@@ -147,28 +154,36 @@ def download_transcription():
 @app.route('/get-decision', methods=['POST'])
 def get_decision():
     file_path = "hasil_transkripsi.txt"  # Pastikan path benar
-    JOBDESC = session.get('JOBDESC', '')  # Default ke string kosong jika None
-    JOBSPEC = session.get('JOBSPEC', '')
 
     try:
-        print("JOBDESC:", JOBDESC)  # Debug
-        print("JOBSPEC:", JOBSPEC)
-
         # Cek apakah file ada
         if not os.path.exists(file_path):
             return jsonify({'error': 'File transkripsi tidak ditemukan.'}), 400
 
-        # Read the file content
+        # Baca isi file
         content = utility.read_txt_file(file_path).strip()
+        print("Isi transkripsi:", content)  # Debugging isi file
 
-        # Validasi sebelum diproses
         if not content:
             return jsonify({'error': 'File transkripsi kosong.'}), 400
-        if not JOBDESC.strip() or not JOBSPEC.strip():
-            return jsonify({'error': 'JOBDESC atau JOBSPEC belum diatur dalam session.'}), 400
+
+        JOBDESC = faiss_db.get_vector_by_type("JOBDESC")
+        JOBSPEC = faiss_db.get_vector_by_type("JOBSPEC")
+
+        print("JOBDESC:", JOBDESC)  # Debugging
+        print("JOBSPEC:", JOBSPEC)  # Debugging
+
+        # Validasi sebelum diproses
+        if JOBDESC is None or JOBSPEC is None:
+            return jsonify({'error': 'JOBDESC atau JOBSPEC tidak ditemukan di database FAISS.'}), 400
+
+        # Pastikan format JOBDESC dan JOBSPEC adalah NumPy array sebelum dikonversi ke tensor
+        JOBDESC = np.array(JOBDESC, dtype=np.float32)
+        JOBSPEC = np.array(JOBSPEC, dtype=np.float32)
 
         # Generate similarity
         response = bot.cosine_similarity(content, JOBDESC, JOBSPEC)
+
         # Format hasil response sesuai kebutuhan
         formatted_text = f"""
         📌 Summary:
@@ -187,12 +202,13 @@ def get_decision():
 
         with open(output_filepath, "w", encoding="utf-8") as output_file:
             output_file.write(formatted_text)
+
         return jsonify({'response': response}), 200
 
     except Exception as e:
         print("Error terjadi:", e)  # Debugging
         return jsonify({'error': f"An error occurred: {str(e)}"}), 500
-
+    
 @app.route('/download-decision', methods=['GET'])
 def download_decision():
     # Path ke file hasil transkripsi
