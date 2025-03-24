@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request, session, json
 from utils import Utils
 from chatbot import ChatBot
+from driver import GoogleMeetBot
 from datetime import datetime
 from flask import send_file
 import os
@@ -21,6 +22,22 @@ def preindex():
     print(app.secret_key)
     session.clear()
     return render_template('preindex.html')
+
+@app.route('/join-meet', methods=['POST'])
+def handle_meet_request():
+    """Menerima link Google Meet dari frontend dan menjalankan Selenium"""
+    data = request.json
+    meet_url = data.get("meet_url")
+
+    if not meet_url:
+        return jsonify({"error": "URL Google Meet diperlukan!"}), 400
+
+    try:
+        bot = GoogleMeetBot(meet_url)
+        bot.run()
+        return jsonify({"status": "Bot berjalan untuk " + meet_url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/index', methods=['GET', 'POST'])
 def index():
