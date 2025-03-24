@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor
 import threading
 
-
 load_dotenv()
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 

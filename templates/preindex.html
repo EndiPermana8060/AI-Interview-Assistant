@@ -47,13 +47,39 @@
             background: rgba(255, 255, 255, 0.6);
             border: none;
         }
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+        }
+        #meet_url {
+            background: rgba(255, 255, 255, 0.6);
+            border: none;
+            padding: 10px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        #meet_url:focus {
+            background: rgba(255, 255, 255, 0.8);
+            outline: none;
+            box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
+        }
+
     </style>
 </head>
 <body>
 
     <div class="container text-white">
-        <h3 class="text-center mb-3">Masukkan Teks</h3>
-        
+        <label class="fw-bold">Masukkan Link Google Meet:</label>
+        <div class="input-group mb-3">
+            <span class="input-group-text"><i class="fas fa-video"></i></span>
+            <input type="text" id="meet_url" class="form-control" placeholder="https://meet.google.com/xyz-abc-def" required>
+            <button onclick="joinMeet()" class="btn btn-success" style="width: 20%;">
+                <i class="fas fa-sign-in-alt"></i> Gabung
+            </button>
+        </div>
         <label class="fw-bold">Silahkan Masukkan GRIT:</label>
         <div class="input-group mb-3">
             <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -83,6 +109,22 @@
     </div>
 
     <script>
+        async function joinMeet() {
+            const meetUrl = document.getElementById("meet_url").value;
+            if (!meetUrl) {
+                alert("Masukkan link Google Meet terlebih dahulu!");
+                return;
+            }
+
+            const response = await fetch("/join-meet", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ meet_url: meetUrl }),
+            });
+
+            const result = await response.json();
+            alert(result.message);
+        }
         document.getElementById("submitButton").addEventListener("click", function() {
             let input1 = document.getElementById("userInput").value;
             let input2 = document.getElementById("jobInput").value;
